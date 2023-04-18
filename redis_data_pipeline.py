@@ -1,34 +1,40 @@
 import pandas as pd
 import psycopg2
 import redis
+import pickle
 
 # Redis Cloud Instance Information
-redis_host = 
-redis_port =
-redis_password =  
+redis_host = 'redis-15995.c299.asia-northeast1-1.gce.cloud.redislabs.com'
+redis_port = '15995'
+redis_password =  'Luce9K03Bq0ngfS9oHVyhPzrlP2CjcAu'
 
 # Postgres Database Information
-pg_host = 'your_postgres_host'
-pg_database = 'your_postgres_database'
-pg_user = 'your_postgres_username'
-pg_password = 'your_postgres_password'
+pg_host = 'localhost'
+pg_database = 'pipeline'
+pg_user = 'newton'
+pg_password = '1234'
 
 # Redis Client Object
+redis_client = redis.Redis(host=redis_host, port=redis_port, password=redis_password)
 
 
 def extract_data():
     # Extract data from CSV file using pandas
     data = pd.read_csv('customer_call_logs.csv')
     
-    # Cache data in Redis for faster retrieval
     
-
+    # Cache data in Redis for faster retrieval
+    redis_client.set('customer_call_logs', pickle.dumps(data))
+    
 def transform_data():
     # Retrieve data from Redis cache
-    data = pd.read_json(redis_client.get('customer_call_logs'))
+    transformed_data = pickle.loads(redis_client.get('customer_call_logs'))
 
     # Transform data (clean, structure, format)
-    # ...
+    # Convert call_date to datetime
+    transformed_data['call_date'] = pd.to_datetime(transformed_data['call_date'])
+    # Drop null values
+    transformed_data = transformed_data.dropna()
 
     return transformed_data
 
